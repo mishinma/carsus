@@ -223,7 +223,7 @@ class AtomData(object):
 
     @property
     def ionization_df(self):
-        if not self._ionization_df:
+        if self._ionization_df is None:
             self._ionization_df = self.create_ionization_df()
         return self._ionization_df
 
@@ -829,6 +829,11 @@ class AtomData(object):
         macro_atom_ref_df = macro_atom_ref_df.join(count_down).join(count_up)
         macro_atom_ref_df.fillna(0, inplace=True)
         macro_atom_ref_df["count_total"] = 2*macro_atom_ref_df["count_down"] + macro_atom_ref_df["count_up"]
+
+        # Convert to int
+        macro_atom_ref_df["count_down"] = macro_atom_ref_df["count_down"].astype(np.int)
+        macro_atom_ref_df["count_up"] = macro_atom_ref_df["count_up"].astype(np.int)
+        macro_atom_ref_df["count_total"] = macro_atom_ref_df["count_total"].astype(np.int)
 
         return macro_atom_ref_df
 
