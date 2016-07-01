@@ -12,6 +12,7 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy.orm.exc import NoResultFound
 from astropy import constants as const
 from astropy import units as u
+from astropy.units import Quantity
 from scipy import interpolate
 from tardis.util import species_string_to_tuple
 
@@ -211,13 +212,20 @@ class AtomData(object):
         basic_atom_df : pandas.DataFrame
             DataFrame containing the *basic atomic data* with:
                 index: atomic_number;
-                columns: symbol, name, mass[u].
+                columns: symbol, name, mass[cgs].
         """
         # Set index
         basic_atom_df = self.basic_atom_df.set_index("atomic_number")
 
         # Rename the `weight` column to `mass`
         basic_atom_df.rename(columns={"weight": "mass"}, inplace=True)
+
+        # We have to use constants.u because astropy uses different values for the unit u and the constant.
+        # This is changed in later versions of astropy (the value of constants.u is used in all cases)
+        if u.u.cgs == const.u.cgs:
+            basic_atom_df["mass"] = Quantity(basic_atom_df["mass"].values, "u").cgs
+        else:
+            basic_atom_df["mass"] = basic_atom_df["mass"].values * const.u.cgs
 
         return basic_atom_df
 
@@ -266,7 +274,7 @@ class AtomData(object):
         ionization_df : pandas.DataFrame
             DataFrame containing the *ionization data* with:
                 index: atomic_number, ion_number;
-                columns: ionization_energy[eV].
+                columns: ionization_energy[cgs].
 
         Notes
         ------
@@ -280,6 +288,9 @@ class AtomData(object):
 
         # See the Notes section
         ionization_df["ion_number"] += 1
+
+        # Convert ionization energies to CGS
+        ionization_df["ionization_energy"] = Quantity(ionization_df["ionization_energy"].values, "eV").cgs
 
         # Set index
         ionization_df.set_index(["atomic_number", "ion_number"], inplace=True)
@@ -425,7 +436,7 @@ class AtomData(object):
         levels_df : pandas.DataFrame
             DataFrame containing the *levels data* with:
                 index: none;
-                columns: atomic_number, ion_number, level_number, energy[eV], g[1], metastable.
+                columns: atomic_number, ion_number, level_number, energy[cgs], g[1], metastable.
         """
 
         levels_df = self.levels_df.copy()
@@ -433,6 +444,9 @@ class AtomData(object):
         # Set index
         levels_df.reset_index(inplace=True)
         # levels_df.set_index(["atomic_number", "ion_number", "level_number"], inplace=True)
+
+        # Covert energy to CGS
+        levels_df["energy"] = Quantity(levels_df["energy"].values, 'eV').cgs
 
         # Drop the unwanted columns
         levels_df.drop(["level_id", "ds_id"], axis=1, inplace=True)
@@ -540,13 +554,15 @@ class AtomData(object):
                 DataFrame containing the *levels data* with:
                     index: none;
                     columns: lind_id, atomic_number, ion_number, level_number_lower, level_number_upper,
-                             wavelength[angstrom], nu[Hz], f_lu[1], f_ul[1], B_ul[?], B_ul[?], A_ul[1/s].
+                             wavelength[angstrom], wavelength_cm[CGS], nu[Hz], f_lu[1], f_ul[1], B_ul[?], B_ul[?], A_ul[1/s].
         """
 
         #Set the index
         lines_df = self.lines_df.reset_index()
         # lines_df.set_index(["atomic_number", "ion_number", "level_number_lower", "level_number_upper"], inplace=True)
 
+        # Create a new columns with wavelengths in the CGS units
+        lines_df['wavelength_cm'] = Quantity(lines_df['wavelength'], 'angstrom').cgs
 
         # Drop the unwanted columns
         lines_df.drop(["g_l", "g_u", "gf", "lower_level_id", "upper_level_id", "ds_id"], axis=1, inplace=True)
