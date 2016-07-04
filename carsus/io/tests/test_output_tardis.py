@@ -100,8 +100,8 @@ def test_prepare_ionizatinon_df(ionization_df_prepared, atomic_number, ion_numbe
 
 @with_test_db
 @pytest.mark.parametrize("atomic_number, ion_number, level_number, exp_energy",[
-    (7, 6, 7, 3991860.0 * u.Unit("cm-1")),
-    (4, 3, 2, 981177.5 * u.Unit("cm-1"))
+    (7, 5, 7, 3991860.0 * u.Unit("cm-1")),
+    (4, 2, 2, 981177.5 * u.Unit("cm-1"))
 ])
 def test_prepare_levels_df(levels_df_prepared, atomic_number, ion_number, level_number, exp_energy):
     energy = levels_df_prepared.loc[(atomic_number, ion_number, level_number)]["energy"] * u.eV
@@ -120,8 +120,8 @@ def test_create_levels_df_wo_chianti_species(test_session):
 
 @with_test_db
 @pytest.mark.parametrize("atomic_number, ion_number, level_number_lower, level_number_upper, exp_wavelength",[
-    (7, 6, 0, 1, 29.5343 * u.Unit("angstrom")),
-    (4, 3, 0, 3, 10.1693 * u.Unit("angstrom"))
+    (7, 5, 0, 1, 29.5343 * u.Unit("angstrom")),
+    (4, 2, 0, 3, 10.1693 * u.Unit("angstrom"))
 ])
 def test_prepare_lines_df(lines_df_prepared, atomic_number, ion_number,
                           level_number_lower, level_number_upper, exp_wavelength):
